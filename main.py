@@ -1,0 +1,70 @@
+from langchain_google_genai import ChatGoogleGenerativeAI
+from utils.config import GOOGLE_API_KEY
+from langchain.agents import tool, AgentExecutor, create_react_agent
+from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+from mcps.firebase_mcp import get_firebase_data
+from mcps.nasa_mcp import get_nasa_data
+
+# Define the output structure
+class WeatherPrediction(BaseModel):
+    prediction: str = Field(description="The prediction of whether it will rain or not.")
+    fun_fact: str = Field(description="A fun fact related to the weather prediction.")
+
+# System prompt
+system_prompt = """
+You are a weather prediction AI. Your goal is to predict if it will rain in a given city.
+
+You have access to two tools:
+1. get_firebase_data: This tool provides weather data for Egypt from a public Firebase database. This should be your first choice if the user asks for a city in Egypt.
+2. get_nasa_data: This tool provides weather data for any city in the world from Nasa's POWER API.
+
+Here is your workflow:
+1. Get the city name from the user.
+2. If the city is in Egypt, use the get_firebase_data tool.
+3. If the city is not in Egypt, or if the get_firebase_data tool returns no data, then use the get_nasa_data tool.
+4. Analyze the data from the tools to predict if it will rain.
+5. Return a structured response with the prediction and a fun fact.
+
+Example fun facts:
+- "Wear something heavy."
+- "Wear a good sun block with SPF <level>."
+- "Don't forget your umbrella!"
+
+{tools}
+
+{tool_names}
+
+{agent_scratchpad}
+"""
+
+# Define tools
+@tool
+def get_firebase_data_tool(city: str):
+    """Fetches weather data from a public Firebase database for Egypt."""
+    return get_firebase_data(city)
+
+@tool
+def get_nasa_data_tool(city: str):
+    """Fetches weather data from Nasa's POWER API for any city."""
+    return get_nasa_data(city)
+
+tools = [get_firebase_data_tool, get_nasa_data_tool]
+
+# Create the agent
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=GOOGLE_API_KEY)
+prompt = PromptTemplate.from_template(system_prompt)
+agent = create_react_agent(llm, tools, prompt)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+
+def predict_weather(city: str):
+    """
+    Predicts the weather for a given city.
+    """
+    response = agent_executor.invoke({"input": city})
+    return response
+
+if __name__ == '__main__':
+    city = input("Enter a city name: ")
+    prediction = predict_weather(city)
+    print(prediction)
