@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from utils.config import NASA_API_KEY
 
 def get_nasa_data(city: str):
@@ -6,6 +6,8 @@ def get_nasa_data(city: str):
     Fetches weather data for a given city from Nasa's POWER API.
     """
     # Get coordinates for the city using a free geocoding API
+    city = json.loads(city)["city"]
+    print(city)
     geocoding_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json"
     response = requests.get(geocoding_url)
     if response.status_code == 200 and response.json().get("results"):

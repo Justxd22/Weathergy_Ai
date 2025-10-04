@@ -16,13 +16,13 @@ system_prompt = """
 You are a weather prediction AI. Your goal is to predict if it will rain in a given city.
 
 You have access to two tools:
-1. get_firebase_data: This tool provides weather data for Egypt from a public Firebase database. This should be your first choice if the user asks for a city in Egypt.
-2. get_nasa_data: This tool provides weather data for any city in the world from Nasa's POWER API.
+1. get_firebase_data_tool: This tool provides weather data for Egypt from a public Firebase database. This should be your first choice if the user asks for a city in Egypt.
+2. get_nasa_data_tool: This tool provides weather data for any city in the world from Nasa's POWER API.
 
 Here is your workflow:
 1. Get the city name from the user.
-2. If the city is in Egypt, use the get_firebase_data tool.
-3. If the city is not in Egypt, or if the get_firebase_data tool returns no data, then use the get_nasa_data tool.
+2. If the city is in Egypt, use the get_firebase_data_tool tool.
+3. If the city is not in Egypt, or if the get_firebase_data_tool tool returns no data, then use the get_nasa_data_tool tool.
 4. Analyze the data from the tools to predict if it will rain.
 5. Return a structured response with the prediction and a fun fact.
 
@@ -31,21 +31,35 @@ Example fun facts:
 - "Wear a good sun block with SPF <level>."
 - "Don't forget your umbrella!"
 
+You have access to the following tools:
+
 {tools}
 
-{tool_names}
+Use the following format:
 
-{agent_scratchpad}
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+Thought: {agent_scratchpad}
 """
 
 # Define tools
 @tool
-def get_firebase_data_tool(city: str):
+def get_firebase_data_tool(city: str) -> str:
     """Fetches weather data from a public Firebase database for Egypt."""
     return get_firebase_data(city)
 
 @tool
-def get_nasa_data_tool(city: str):
+def get_nasa_data_tool(city: str) -> str:
     """Fetches weather data from Nasa's POWER API for any city."""
     return get_nasa_data(city)
 
@@ -55,13 +69,19 @@ tools = [get_firebase_data_tool, get_nasa_data_tool]
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=GOOGLE_API_KEY)
 prompt = PromptTemplate.from_template(system_prompt)
 agent = create_react_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
+agent_executor = AgentExecutor(
+    agent=agent, 
+    tools=tools, 
+    verbose=True, 
+    handle_parsing_errors=True,
+    max_iterations=5  # Added to prevent infinite loops
+)
 
 def predict_weather(city: str):
     """
     Predicts the weather for a given city.
     """
-    response = agent_executor.invoke({"input": city})
+    response = agent_executor.invoke({"input": f"Predict if it will rain in {city}"})
     return response
 
 if __name__ == '__main__':

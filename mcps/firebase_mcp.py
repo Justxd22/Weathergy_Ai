@@ -1,10 +1,12 @@
-import requests
+import requests, json
 from utils.config import FIREBASE_CONFIG
 
 def get_firebase_data(city: str):
     """
     Fetches weather data for Egypt from a public Firebase Realtime Database.
     """
+    city = json.loads(city)["city"]
+    print(city)
     if city.lower() in ['cairo', 'alexandria', 'giza', 'luxor', 'aswan', 'egypt']:
         database_url = FIREBASE_CONFIG['databaseURL']
         # The data is at the root, so we can just append .json
