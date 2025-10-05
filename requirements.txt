@@ -2,5 +2,4 @@ langchain
 langchain-google-genai
 requests
 python-dotenv
-fastapi
-uvicorn
+flask

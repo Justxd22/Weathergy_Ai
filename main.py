@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from flask import Flask, request, jsonify
 from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.config import GOOGLE_API_KEY
 from langchain.agents import tool, AgentExecutor, create_react_agent
@@ -6,7 +6,6 @@ from langchain.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 from mcps.firebase_mcp import get_firebase_data
 from mcps.nasa_mcp import get_nasa_data
-import uvicorn
 
 # Define the output structure
 class WeatherPrediction(BaseModel):
@@ -42,7 +41,7 @@ Use the following format:
 Question: the input question you must answer
 Thought: you should always think about what to do
 Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
+Action Input: The input to the action, which should be a JSON object with a single key "city". For example: {{"city": "cairo"}}
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I now know the final answer
@@ -83,17 +82,22 @@ def predict_weather(city: str):
     """
     Predicts the weather for a given city.
     """
+    print(city)
     response = agent_executor.invoke({"input": f"Predict if it will rain in {city}"})
     return response
 
-app = FastAPI()
+app = Flask(__name__)
 
-@app.get("/predict")
-def predict(city: str):
-    return predict_weather(city)
+@app.route("/predict", methods=['GET'])
+def predict():
+    city = request.args.get('city')
+    if not city:
+        return jsonify({"error": "City parameter is required"}), 400
+    response = predict_weather(city)
+    return jsonify(response)
 
 if __name__ == '__main__':
     #city = input("Enter a city name: ")
     #prediction = predict_weather(city)
     #print(prediction)
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    app.run(host="0.0.0.0", port=8000)
