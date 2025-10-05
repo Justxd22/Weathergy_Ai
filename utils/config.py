@@ -13,3 +13,7 @@ NASA_API_KEY = os.getenv("NASA_API_KEY")
 
 # Google API Key
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# Meteomatics API configuration
+METEOMATICS_USERNAME = os.getenv("METEOMATICS_USERNAME")
+METEOMATICS_PASSWORD = os.getenv("METEOMATICS_PASSWORD")
