@@ -1,3 +1,4 @@
+from fastapi import FastAPI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.config import GOOGLE_API_KEY
 from langchain.agents import tool, AgentExecutor, create_react_agent
@@ -5,6 +6,7 @@ from langchain.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 from mcps.firebase_mcp import get_firebase_data
 from mcps.nasa_mcp import get_nasa_data
+import uvicorn
 
 # Define the output structure
 class WeatherPrediction(BaseModel):
@@ -84,7 +86,14 @@ def predict_weather(city: str):
     response = agent_executor.invoke({"input": f"Predict if it will rain in {city}"})
     return response
 
+app = FastAPI()
+
+@app.get("/predict")
+def predict(city: str):
+    return predict_weather(city)
+
 if __name__ == '__main__':
-    city = input("Enter a city name: ")
-    prediction = predict_weather(city)
-    print(prediction)
+    #city = input("Enter a city name: ")
+    #prediction = predict_weather(city)
+    #print(prediction)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
