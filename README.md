@@ -39,10 +39,13 @@ The agent first checks if the city is in Egypt and tries to use the Firebase too
 
 ## Usage
 
-1.  **Run the main script:**
+1.  **Run the server:**
     ```bash
     python main.py
     ```
-2.  **Enter a city name when prompted.**
+2.  **Open a new terminal and use `curl` to make a request:**
+    ```bash
+    curl -X GET 'http://localhost:8000/predict?city=cairo'
+    ```
 
-The AI will then provide a weather prediction and a fun fact.
+The AI will then provide a weather prediction and a fun fact in the response.
