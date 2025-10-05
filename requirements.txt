@@ -3,7 +3,5 @@ langchain-google-genai
 requests
 python-dotenv
 flask
-matplotlib
 pandas
-geopy
 flask-cors
