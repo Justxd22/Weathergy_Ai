@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from utils.config import GOOGLE_API_KEY
 from langchain.agents import tool, AgentExecutor, create_react_agent
@@ -103,6 +104,7 @@ def predict_weather(city: str):
     return response
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/predict", methods=['GET'])
 def predict():

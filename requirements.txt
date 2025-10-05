@@ -6,3 +6,4 @@ flask
 matplotlib
 pandas
 geopy
+flask-cors
